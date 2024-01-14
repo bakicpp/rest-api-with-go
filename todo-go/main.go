@@ -46,6 +46,7 @@ func getById(id string) (*todo, error) {
 }
 
 func getTodo(context *gin.Context) {
+
 	id := context.Param("id")
 	todo, err := getById(id)
 
@@ -70,6 +71,31 @@ func toggleTodoStatus(context *gin.Context) {
 	context.IndentedJSON(http.StatusOK, todo)
 }
 
+func putTodo(context *gin.Context) {
+	id := context.Param("id")
+	currentTodo, err := getById(id)
+
+	if err != nil {
+		context.IndentedJSON(http.StatusNotFound, gin.H{"message": "Todo not found"})
+		return
+	}
+
+	var updatedTodo todo
+	if err := context.BindJSON(&updatedTodo); err != nil {
+		return
+	}
+
+	// Update only the fields that are provided in the request
+	if updatedTodo.Item != "" {
+		currentTodo.Item = updatedTodo.Item
+	}
+	if updatedTodo.Completed {
+		currentTodo.Completed = updatedTodo.Completed
+	}
+
+	context.IndentedJSON(http.StatusOK, currentTodo)
+}
+
 func main() {
 	router := gin.Default()
 
@@ -77,5 +103,6 @@ func main() {
 	router.GET("/todos/:id", getTodo)
 	router.POST("/todos", postTodos)
 	router.PATCH("todos/:id", toggleTodoStatus)
+	router.PUT("/todos/:id", putTodo)
 	router.Run("localhost:9090")
 }
